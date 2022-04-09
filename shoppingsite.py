@@ -66,25 +66,22 @@ def show_melon(melon_id):
 def show_shopping_cart():
     """Display content of shopping cart."""
 
-    # TODO: Display the contents of the shopping cart.
+    cart = session.get("cart", {})
 
-    # The logic here will be something like:
-    #
-    # - get the cart dictionary from the session
-    # - create a list to hold melon objects and a variable to hold the total
-    #   cost of the order
-    # - loop over the cart dictionary, and for each melon id:
-    #    - get the corresponding Melon object
-    #    - compute the total cost for that type of melon
-    #    - add this to the order total
-    #    - add quantity and total cost as attributes on the Melon object
-    #    - add the Melon object to the list created above
-    # - pass the total order cost and the list of Melon objects to the template
-    #
-    # Make sure your function can also handle the case wherein no cart has
-    # been added to the session
+    melon_objects_list = []
+    order_total = 0
 
-    return render_template("cart.html")
+    if "cart" not in session:
+        flash("Your cart is empty.")
+    else:
+        for item in session["cart"]:
+            melon = melons.get_by_id(item)
+            total_cost = melon.price * session["cart"][melon.melon_id]
+            order_total += total_cost
+            melon.quantity = session["cart"][melon.melon_id]
+            melon.total_cost = total_cost
+            melon_objects_list.append(melon)
+    return render_template("cart.html", total_cost=total_cost, melon_objects_list=melon_objects_list)
 
 
 @app.route("/add_to_cart/<melon_id>")
@@ -95,32 +92,27 @@ def add_to_cart(melon_id):
     page and display a confirmation message: 'Melon successfully added to
     cart'."""
 
-    # TODO: Finish shopping cart functionality
 
-    # The logic here should be something like:
-    #
-    # - check if a "cart" exists in the session, and create one (an empty
-    #   dictionary keyed to the string "cart") if not
+    # - check if a cart is in the session
+    if "cart" not in session:
+        session["cart"] = {}
+
     # - check if the desired melon id is the cart, and if not, put it in
+    if melon_id in session["cart"].keys():
+        session["cart"][melon_id] += 1
+
     # - increment the count for that melon id by 1
+    else:
+        session["cart"][melon_id] = 1
+
     # - flash a success message
+    flash('Success! Melon added to your cart.')
+
+    # updates page
+    session.modified = True
+
     # - redirect the user to the cart page
-
-#FIXME
-
-    # if "cart" in session: 
-    #     if melon_id in session["cart"]:
-    #         session["cart"][melon_id] += 1
-    #     else: 
-    #         session["cart"][melon_id] = 1
-    # else: 
-    #     session['cart'] = {}      
-    
-    # session.modified = True
-
-    # return redirect("/cart")    
-    
-    # return "Oops! This needs to be implemented!"
+    return redirect("/cart")
 
 
 @app.route("/login", methods=["GET"])
